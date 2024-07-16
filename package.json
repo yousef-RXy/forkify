@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "rm -r .parcel-cache && parcel index.html"
+    "start": "rm -r .parcel-cache && parcel index.html",
+    "build": "rm -r .parcel-cache && parcel build index.html"
   },
   "keywords": [],
   "author": "Yousef Nasr",
