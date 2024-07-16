@@ -34,7 +34,7 @@ jobs:
         run: npm install
 
       - name: Build Parcel app
-        run: parcel build index.html
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
