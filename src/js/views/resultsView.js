@@ -7,9 +7,9 @@ class ResultsView extends view {
   _errorMessage = 'No recipes found for your query! Please try again';
   _message = '';
 
-  addHandlerRender(handler) {
-    ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
-  }
+  // addHandlerRender(handler) {
+  //   ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
+  // }
 
   _generateHTML() {
     return this._data

@@ -595,6 +595,8 @@ var _searchViewJs = require("./views/searchView.js");
 var _searchViewJsDefault = parcelHelpers.interopDefault(_searchViewJs);
 var _resultsViewJs = require("./views/resultsView.js");
 var _resultsViewJsDefault = parcelHelpers.interopDefault(_resultsViewJs);
+var _paginationViewJs = require("./views/paginationView.js");
+var _paginationViewJsDefault = parcelHelpers.interopDefault(_paginationViewJs);
 var _viewJs = require("./views/view.js");
 var _viewJsDefault = parcelHelpers.interopDefault(_viewJs);
 const controlRecipe = async function() {
@@ -616,18 +618,24 @@ const controlSearchResults = async function() {
         const query = (0, _searchViewJsDefault.default).getQuery();
         if (!query) return;
         await _modelJs.loadSearchResults(query);
-        (0, _resultsViewJsDefault.default).render(_modelJs.state.search.results);
+        (0, _resultsViewJsDefault.default).render(_modelJs.getSearchResultsPage());
+        (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
     } catch (err) {
         (0, _recipeViewJsDefault.default).renderError();
     }
 };
+const controlPagination = function(goToPage) {
+    (0, _resultsViewJsDefault.default).render(_modelJs.getSearchResultsPage(goToPage));
+    (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
+};
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipe);
     (0, _searchViewJsDefault.default).addHandlerSearch(controlSearchResults);
+    (0, _paginationViewJsDefault.default).addHandlerClick(controlPagination);
 };
 init();
 
-},{"core-js/stable":"7CRIE","regenerator-runtime/runtime":"dXNgZ","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView.js":"9OQAM","./views/resultsView.js":"cSbZE","./views/view.js":"bWlJ9","@parcel/transformer-js/src/esmodule-helpers.js":"gkX4W"}],"7CRIE":[function(require,module,exports) {
+},{"core-js/stable":"7CRIE","regenerator-runtime/runtime":"dXNgZ","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView.js":"9OQAM","./views/resultsView.js":"cSbZE","./views/view.js":"bWlJ9","@parcel/transformer-js/src/esmodule-helpers.js":"gkX4W","./views/paginationView.js":"6z7bi"}],"7CRIE":[function(require,module,exports) {
 "use strict";
 require("1784995cff40f4ee");
 require("3db84f65815009e9");
@@ -17563,13 +17571,16 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "state", ()=>state);
 parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
 parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
+parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
 var _configJs = require("./config.js");
 var _helpersJs = require("./helpers.js");
 const state = {
     recipe: {},
     search: {
         query: "",
-        results: []
+        page: 1,
+        results: [],
+        resultsPerPage: (0, _configJs.RES_PER_PAGE)
     }
 };
 const loadRecipe = async function(id) {
@@ -17604,6 +17615,12 @@ const loadSearchResults = async function(query) {
     } catch (error) {
         throw err;
     }
+};
+const getSearchResultsPage = function(page = state.search.page) {
+    state.search.page = page;
+    const start = (page - 1) * state.search.resultsPerPage;
+    const end = page * state.search.resultsPerPage;
+    return state.search.results.slice(start, end);
 };
 
 },{"./config.js":"k5Hzs","./helpers.js":"hGI1E","@parcel/transformer-js/src/esmodule-helpers.js":"gkX4W"}],"k5Hzs":[function(require,module,exports) {
@@ -18173,12 +18190,9 @@ class ResultsView extends (0, _viewDefault.default) {
     _parentElement = document.querySelector(".results");
     _errorMessage = "No recipes found for your query! Please try again";
     _message = "";
-    addHandlerRender(handler) {
-        [
-            "hashchange",
-            "load"
-        ].forEach((ev)=>window.addEventListener(ev, handler));
-    }
+    // addHandlerRender(handler) {
+    //   ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
+    // }
     _generateHTML() {
         return this._data.map((rec)=>`
         <li class="preview">
@@ -18196,6 +18210,44 @@ class ResultsView extends (0, _viewDefault.default) {
     }
 }
 exports.default = new ResultsView();
+
+},{"./view":"bWlJ9","url:../../img/icons.svg":"fD0fC","@parcel/transformer-js/src/esmodule-helpers.js":"gkX4W"}],"6z7bi":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _view = require("./view");
+var _viewDefault = parcelHelpers.interopDefault(_view);
+var _iconsSvg = require("url:../../img/icons.svg");
+var _iconsSvgDefault = parcelHelpers.interopDefault(_iconsSvg);
+class PaginationView extends (0, _viewDefault.default) {
+    _parentElement = document.querySelector(".pagination");
+    _errorMessage = "No recipes found for your query! Please try again";
+    _message = "";
+    addHandlerClick(handler) {
+        this._parentElement.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btn--inline");
+            if (!btn) return;
+            handler(+btn.dataset.goto);
+        });
+    }
+    _generateHTML() {
+        const numPages = Math.ceil(this._data.results.length / this._data.resultsPerPage);
+        return `
+      ${this._data.page > 1 && this._data.page <= numPages ? `<button data-goto="${this._data.page - 1}" class="btn--inline pagination__btn--prev">
+        <svg class="search__icon">
+          <use href="${0, _iconsSvgDefault.default}#icon-arrow-left"></use>
+        </svg>
+        <span>Page ${this._data.page - 1}</span>
+      </button>` : ""}
+      ${numPages > this._data.page && numPages !== 1 && this._data.page > 0 ? `<button data-goto="${this._data.page + 1}" class="btn--inline pagination__btn--next">
+        <span>Page ${this._data.page + 1}</span>
+        <svg class="search__icon">
+          <use href="${0, _iconsSvgDefault.default}#icon-arrow-right"></use>
+        </svg>
+      </button>` : ""}
+    `;
+    }
+}
+exports.default = new PaginationView();
 
 },{"./view":"bWlJ9","url:../../img/icons.svg":"fD0fC","@parcel/transformer-js/src/esmodule-helpers.js":"gkX4W"}]},["7t8XP","aenu9"], "aenu9", "parcelRequire3a11")
 
