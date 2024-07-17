@@ -11,7 +11,7 @@ class RecipeView {
     this.#parentElement.insertAdjacentHTML('afterbegin', html);
   }
 
-  renderSpinner(parentEl) {
+  renderSpinner() {
     const html = `
           <div class="spinner">
             <svg>
@@ -21,6 +21,10 @@ class RecipeView {
     `;
     this.#clear();
     this.#parentElement.insertAdjacentHTML('afterbegin', html);
+  }
+
+  addHandlerRender(handler) {
+    ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
   }
 
   #clear() {
@@ -112,6 +116,7 @@ class RecipeView {
     </div>
 `;
   }
+
   #generateHTMLIngredient(ing) {
     return `
           <li class="recipe__ingredient">
