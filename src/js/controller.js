@@ -34,8 +34,11 @@ const renderSpinner = function (parentEl) {
   parentEl.insertAdjacentHTML('afterbegin', html);
 };
 
-const getRecipe = async function (id) {
+const getRecipe = async function () {
   try {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+
     renderSpinner(recipeContainer);
 
     const res = await fetch(
@@ -163,5 +166,4 @@ const getRecipe = async function (id) {
     console.log(err);
   }
 };
-getRecipe('664c8f193e7aa067e94e8706');
-// renderSpinner(recipeContainer);
+['hashchange', 'load'].forEach(ev => window.addEventListener(ev, getRecipe));
