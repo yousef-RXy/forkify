@@ -1,4 +1,4 @@
-import view from './view';
+import view from './view.js';
 
 import icons from 'url:../../img/icons.svg';
 

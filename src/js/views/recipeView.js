@@ -1,4 +1,4 @@
-import View from './view';
+import View from './view.js';
 
 import icons from 'url:../../img/icons.svg';
 import { Fraction } from 'fractional';
@@ -18,6 +18,14 @@ class RecipeView extends View {
       if (!target) return;
       const { updateTo } = target.dataset;
       if (+updateTo > 0) handler(+updateTo);
+    });
+  }
+
+  addHandlerAddBookmark(handler) {
+    this._parentElement.addEventListener('click', function (e) {
+      const target = e.target.closest('.btn--bookmark');
+      if (!target) return;
+      handler();
     });
   }
 
@@ -74,9 +82,11 @@ class RecipeView extends View {
           <use href="${icons}#icon-user"></use>
         </svg>
       </div>
-      <button class="btn--round">
+      <button class="btn--round btn--bookmark">
         <svg class="">
-          <use href="${icons}#icon-bookmark-fill"></use>
+          <use href="${icons}#icon-bookmark${
+      this._data.bookmarked ? '-fill' : ''
+    }"></use>
         </svg>
       </button>
     </div>
