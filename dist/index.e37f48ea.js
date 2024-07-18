@@ -604,11 +604,14 @@ const controlRecipe = async function() {
         const id = window.location.hash.slice(1);
         if (!id) return;
         (0, _recipeViewJsDefault.default).renderSpinner();
+        //update results view to select active search results
+        (0, _resultsViewJsDefault.default).update(_modelJs.getSearchResultsPage());
         //load recipe
         await _modelJs.loadRecipe(id);
         //render recipe
         (0, _recipeViewJsDefault.default).render(_modelJs.state.recipe);
     } catch (err) {
+        console.log(err);
         (0, _recipeViewJsDefault.default).renderError();
     }
 };
@@ -616,12 +619,12 @@ const controlSearchResults = async function() {
     try {
         (0, _resultsViewJsDefault.default).renderSpinner();
         const query = (0, _searchViewJsDefault.default).getQuery();
-        if (!query) return;
+        if (!query) throw new Error();
         await _modelJs.loadSearchResults(query);
         (0, _resultsViewJsDefault.default).render(_modelJs.getSearchResultsPage());
         (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
     } catch (err) {
-        (0, _recipeViewJsDefault.default).renderError();
+        (0, _resultsViewJsDefault.default).renderError();
     }
 };
 const controlPagination = function(goToPage) {
@@ -630,7 +633,7 @@ const controlPagination = function(goToPage) {
 };
 const controlServings = function(newServings) {
     _modelJs.updateServings(newServings);
-    (0, _recipeViewJsDefault.default).render(_modelJs.state.recipe);
+    (0, _recipeViewJsDefault.default).update(_modelJs.state.recipe);
 };
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipe);
@@ -17609,6 +17612,7 @@ const loadRecipe = async function(id) {
 const loadSearchResults = async function(query) {
     try {
         state.search.query = query;
+        state.search.page = 1;
         const { data: { recipes } } = await (0, _helpersJs.getJSON)(`${(0, _configJs.API_URL)}?search=${query}`);
         state.search.results = recipes.map((rec)=>{
             return {
@@ -17838,6 +17842,19 @@ class View {
         const html = this._generateHTML();
         this._clear();
         this._parentElement.insertAdjacentHTML("afterbegin", html);
+    }
+    update(data) {
+        if (!data || Array.isArray(data) && data.length === 0) return;
+        this._data = data;
+        const newHTML = this._generateHTML();
+        const newDOM = document.createRange().createContextualFragment(newHTML);
+        const newElements = Array.from(newDOM.querySelectorAll("*"));
+        const curElements = Array.from(this._parentElement.querySelectorAll("*"));
+        newElements.forEach((newEl, i)=>{
+            const curEl = curElements[i];
+            if (!newEl.isEqualNode(curEl) && newEl.firstChild?.nodeValue.trim() !== "") curEl.textContent = newEl.textContent;
+            if (!newEl.isEqualNode(curEl)) Array.from(newEl.attributes).forEach((attr)=>curEl.setAttribute(attr.name, attr.value));
+        });
     }
     renderSpinner() {
         const html = `
@@ -18214,19 +18231,22 @@ class ResultsView extends (0, _viewDefault.default) {
     //   ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
     // }
     _generateHTML() {
-        return this._data.map((rec)=>`
-        <li class="preview">
-          <a class="preview__link" href="#${rec.id}">
-            <figure class="preview__fig">
-              <img src="${rec.image}" alt="${rec.title}" />
-            </figure>
-            <div class="preview__data">
-              <h4 class="preview__title">${rec.title}</h4>
-              <p class="preview__publisher">${rec.publisher}</p>
-            </div>
-          </a>
-        </li>
-      `).join("");
+        return this._data.map((rec)=>{
+            const id = window.location.hash.slice(1);
+            return `
+          <li class="preview">
+            <a class="preview__link ${id === rec.id ? "preview__link--active" : ""}" href="#${rec.id}">
+              <figure class="preview__fig">
+                <img src="${rec.image}" alt="${rec.title}" />
+              </figure>
+              <div class="preview__data">
+                <h4 class="preview__title">${rec.title}</h4>
+                <p class="preview__publisher">${rec.publisher}</p>
+              </div>
+            </a>
+          </li>
+        `;
+        }).join("");
     }
 }
 exports.default = new ResultsView();

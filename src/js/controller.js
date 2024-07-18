@@ -15,12 +15,16 @@ const controlRecipe = async function () {
     if (!id) return;
     recipeView.renderSpinner();
 
+    //update results view to select active search results
+    resultsView.update(model.getSearchResultsPage());
+
     //load recipe
     await model.loadRecipe(id);
 
     //render recipe
     recipeView.render(model.state.recipe);
   } catch (err) {
+    console.log(err);
     recipeView.renderError();
   }
 };
@@ -30,14 +34,14 @@ const controlSearchResults = async function () {
     resultsView.renderSpinner();
 
     const query = searchView.getQuery();
-    if (!query) return;
+    if (!query) throw new Error();
 
     await model.loadSearchResults(query);
 
     resultsView.render(model.getSearchResultsPage());
     paginationView.render(model.state.search);
   } catch (err) {
-    recipeView.renderError();
+    resultsView.renderError();
   }
 };
 
@@ -48,7 +52,7 @@ const controlPagination = function (goToPage) {
 
 const controlServings = function (newServings) {
   model.updateServings(newServings);
-  recipeView.render(model.state.recipe);
+  recipeView.update(model.state.recipe);
 };
 
 const init = function () {
